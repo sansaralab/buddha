@@ -1,27 +1,38 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"time"
-	"net/http"
+)
+import (
+	"github.com/emicklei/go-restful"
+	"github.com/sansaralab/buddha/resources"
 	"log"
-	"github.com/sansaralab/buddha/handlers"
+	"net/http"
+	"github.com/emicklei/go-restful/swagger"
 )
 
 func main() {
-	r := mux.NewRouter()
-	setRoutes(r)
+	// to see what happens in the package, uncomment the following
+	//restful.TraceLogger(log.New(os.Stdout, "[restful] ", log.LstdFlags|log.Lshortfile))
 
-	srv := &http.Server{
-		Handler:      r,
-		Addr:         "127.0.0.1:8000",
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+	wsContainer := restful.NewContainer()
+	p := resources.ProjectResource{}
+	p.Register(wsContainer)
+
+	// Optionally, you can install the Swagger Service which provides a nice Web UI on your REST API
+	// You need to download the Swagger HTML5 assets and change the FilePath location in the config below.
+	// Open http://localhost:8080/apidocs and enter http://localhost:8080/apidocs.json in the api input field.
+	config := swagger.Config{
+		WebServices:    wsContainer.RegisteredWebServices(), // you control what services are visible
+		WebServicesUrl: "http://localhost:8080",
+		ApiPath:        "/apidocs.json",
+
+		//// Optionally, specifiy where the UI is located
+		//SwaggerPath:     "/apidocs/",
+		//SwaggerFilePath: "/Users/emicklei/xProjects/swagger-ui/dist"
 	}
+	swagger.RegisterSwaggerService(config, wsContainer)
 
-	log.Fatal(srv.ListenAndServe())
-}
-
-func setRoutes(r *mux.Router) {
-	r.Handle("/projects", handlers.NewProjectHandler())
+	log.Println("start listening on localhost:8080")
+	server := &http.Server{Addr: ":8080", Handler: wsContainer}
+	log.Fatal(server.ListenAndServe())
 }
