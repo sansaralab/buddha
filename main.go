@@ -1,34 +1,31 @@
 package main
 
 import (
-)
-import (
 	"github.com/emicklei/go-restful"
+	"github.com/emicklei/go-restful/swagger"
 	"github.com/sansaralab/buddha/resources"
 	"log"
 	"net/http"
-	"github.com/emicklei/go-restful/swagger"
+	"os/user"
 )
 
 func main() {
-	// to see what happens in the package, uncomment the following
 	//restful.TraceLogger(log.New(os.Stdout, "[restful] ", log.LstdFlags|log.Lshortfile))
 
 	wsContainer := restful.NewContainer()
 	p := resources.ProjectResource{}
 	p.Register(wsContainer)
 
-	// Optionally, you can install the Swagger Service which provides a nice Web UI on your REST API
-	// You need to download the Swagger HTML5 assets and change the FilePath location in the config below.
-	// Open http://localhost:8080/apidocs and enter http://localhost:8080/apidocs.json in the api input field.
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
 	config := swagger.Config{
-		WebServices:    wsContainer.RegisteredWebServices(), // you control what services are visible
-		WebServicesUrl: "http://localhost:8080",
-		ApiPath:        "/apidocs.json",
-
-		//// Optionally, specifiy where the UI is located
-		//SwaggerPath:     "/apidocs/",
-		//SwaggerFilePath: "/Users/emicklei/xProjects/swagger-ui/dist"
+		WebServices:     wsContainer.RegisteredWebServices(),
+		WebServicesUrl:  "http://localhost:8080",
+		ApiPath:         "/apidocs.json",
+		SwaggerPath:     "/apidocs/",
+		SwaggerFilePath: usr.HomeDir + "/github/swagger-api/swagger-ui/dist",
 	}
 	swagger.RegisterSwaggerService(config, wsContainer)
 
