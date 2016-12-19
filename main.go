@@ -3,6 +3,9 @@ package main
 import (
 	"github.com/emicklei/go-restful"
 	"github.com/emicklei/go-restful/swagger"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	"github.com/sansaralab/buddha/repository"
 	"github.com/sansaralab/buddha/resources"
 	"log"
 	"net/http"
@@ -11,9 +14,17 @@ import (
 
 func main() {
 	//restful.TraceLogger(log.New(os.Stdout, "[restful] ", log.LstdFlags|log.Lshortfile))
+	var dbconf = "user=postgres password=postgres dbname=sansaraci port=32771 sslmode=disable"
+	db, err := sqlx.Connect("postgres", dbconf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	r := repository.NewRepository(db)
 
 	wsContainer := restful.NewContainer()
-	p := resources.ProjectResource{}
+	p := resources.NewProjectResource(r)
 	p.Register(wsContainer)
 
 	usr, err := user.Current()
